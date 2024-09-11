@@ -5,14 +5,16 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     AudioSource audioSource;
-    public AudioClip[] clip = new AudioClip[2];
+    public AudioClip[] clip = new AudioClip[4];
     int clipCurrent;
 
     public Card firstCard;
     public Card secondCard;
 
     public Text timeText;
+    public Animator animatorTimeText;
     float time = 0.0f;
+
     int timeRtanCount = 0;
     public GameObject timeRtan;
 
@@ -44,10 +46,12 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        animatorTimeText.SetBool("isAlert", false);
         onAlert = false;
         AudioManager.instance.SetClipStart(1);
 
         audioSource =GetComponent<AudioSource>();
+        audioSource.volume = AudioManager.instance.seSound; // Sound effect's volume control
 
         Time.timeScale = 1.0f;
     }
@@ -55,7 +59,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        audioSource.volume = AudioManager.instance.seSound; // Sound effect's volume countrol
+        time += Time.deltaTime;
 
         UpdateTimeRtan();
         UpdateAlertSound();
@@ -64,7 +68,6 @@ public class GameManager : MonoBehaviour
 
     void UpdateTimeRtan()
     {
-        time += Time.deltaTime;
         if((int)(time / 1.0f) > timeRtanCount)
         {
             timeRtanCount++;
@@ -77,6 +80,7 @@ public class GameManager : MonoBehaviour
         if (time >= 25.0f && time < 30.0f && !onAlert)
         {
             onAlert = true;
+            animatorTimeText.SetBool("isAlert", true);
             AudioManager.instance.SetClipStart(2);
         }
     }
@@ -145,17 +149,15 @@ public class GameManager : MonoBehaviour
             bestTimeRecord = time;
         }
 
-        if (bestTimeRecord < time)
-        {
-            bestTimeRecord = time;
-        }
-        else
+        if (time < bestTimeRecord)
         {
             bestTimeRecord = time;
             PlayerPrefs.SetFloat(bestTimeRecordKey, bestTimeRecord);
         }
 
         bestTimeRecordNumText.text = bestTimeRecord.ToString("N2");
+
+        audioSource.PlayOneShot(clip[2]);
     }
 
 	public void ClearLevel () {
@@ -189,6 +191,9 @@ public class GameManager : MonoBehaviour
         AudioManager.instance.StopAudio(); // Stop BGM
         Time.timeScale = 0.0f;
         failureUi.SetActive(true);
+
+        audioSource.volume = AudioManager.instance.seSound * 0.08f;
+        audioSource.PlayOneShot(clip[3]);
     }
 
     public void AddTime(float amount)
